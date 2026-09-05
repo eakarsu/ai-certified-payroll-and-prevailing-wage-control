@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {calculate} from '../src/lib/domain-engine';
+test('valid three-decimal multipliers use exact half-up wage cents',()=>{const input={ruleSource:'reviewed fixture',regularMinutes:0,overtimeMinutes:60,baseRateCents:10000,fringeRateCents:500,fringePaidCents:500,grossPaidCents:0,overtimeMultiplier:1.001};assert.equal(calculate('payroll',input).requiredWageCents,10010);assert.throws(()=>calculate('payroll',{...input,overtimeMultiplier:1.0001}),/three decimals/);});

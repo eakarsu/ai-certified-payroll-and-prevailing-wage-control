@@ -1,0 +1,6 @@
+import { authorize } from '@/lib/api-auth';
+import { prisma } from '@/lib/prisma';
+import { recordMetadata } from '@/lib/record-policy';
+import { records,errorResponse } from '@/lib/record-store';
+export const dynamic='force-dynamic';
+export async function GET(request:Request){try{await authorize();const q=(new URL(request.url).searchParams.get('q')||'').slice(0,200);const now=new Date();const inventory=await Promise.all(Object.values(recordMetadata).map(async e=>{const client=records(prisma,e.name),where=q?{OR:e.fields.filter(f=>f.kind==='string').map(f=>({[f.name]:{contains:q,mode:'insensitive'}}))}:{};const[total,approved,preview]=await Promise.all([client.count({where}),client.count({where:{...where,status:'Approved'}}),q?client.findMany({where,take:10,orderBy:{createdAt:'desc'}}):Promise.resolve([])]);return{entity:e.name,total,approved,preview,previewLimit:10};}));const[overdue,openTasks,analyses,sources]=await Promise.all([prisma.operationalTask.count({where:{done:false,dueAt:{lt:now}}}),prisma.operationalTask.count({where:{done:false}}),prisma.workflowAnalysis.count(),prisma.domainArtifact.count()]);return Response.json({inventory,overdue,openTasks,analyses,sources,measuredAt:now});}catch(e){return errorResponse(e);}}

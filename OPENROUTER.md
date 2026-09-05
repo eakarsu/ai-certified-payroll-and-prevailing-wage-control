@@ -1,0 +1,13 @@
+# OpenRouter configuration
+
+The server reads the API key from `.env`; the key is never returned by application APIs or placed in browser bundles. Existing OpenRouter key, model and base URL were copied from the authorized BeautyHQ environment. Each app has separate database credentials and session secrets. No unrelated BeautyHQ service credentials or customer data were copied.
+
+`OPENROUTER_API_KEY` authenticates requests. `OPENROUTER_MODEL` supplies the default model; Settings can persist an administrator override in this app's database. `OPENROUTER_ALLOWED_MODELS` optionally restricts comma-separated model IDs. The model catalog refresh button obtains currently published IDs and metadata from OpenRouter. Model availability and prices are provider-controlled.
+
+The `.env.example` enumerates supported environment variables. Optional empty variables are omitted. Structured values use valid JSON. For example, `OPENROUTER_PROVIDER_JSON='{"allow_fallbacks":true,"require_parameters":true,"data_collection":"deny"}'`. `OPENROUTER_REASONING_JSON='{"effort":"low"}'` requires a model that supports it. Do not put secrets in provider metadata.
+
+Supported draft arguments: temperature 0–2; top_p/min_p/top_a 0–1; top_k 0–100,000; frequency_penalty/presence_penalty −2–2; repetition_penalty 0–10; seed integer 0–2,147,483,647; max_tokens/max_completion_tokens 128–32,768; top_logprobs 0–20; logprobs boolean; stop/model fallback arrays; provider, reasoning, logit_bias, plugins and metadata objects; reasoning_effort, route, service_tier, user and session_id strings. `OPENROUTER_EXTRA_PARAMETERS_JSON` accepts the same allowlisted arguments. Administrator settings override environment request parameters. Every argument remains subject to model/provider support; an unsupported request returns an error rather than a fabricated result.
+
+Timeout is 1–180 seconds (`OPENROUTER_TIMEOUT_MS`, default 60 seconds). App calls share a durable 20-request-per-user-per-hour budget. Streaming is disabled and JSON response format is enforced because these workflows validate and save structured drafts. Arbitrary endpoint URLs, client-supplied credentials, model tool execution and image/video generation are not part of this draft API. There is no finite list of every future OpenRouter argument: unsupported draft arguments are rejected explicitly.
+
+Official references: [chat completions](https://openrouter.ai/docs/api/api-reference/chat/send-chat-completion-request), [provider routing](https://openrouter.ai/docs/guides/routing/provider-selection), [model catalog](https://openrouter.ai/docs/api/api-reference/models/get-models).

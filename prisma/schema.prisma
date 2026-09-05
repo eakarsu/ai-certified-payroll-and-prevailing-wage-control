@@ -1,0 +1,362 @@
+// Generated schema — modeled after beautyhqio conventions.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  active       Boolean @default(true)
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(ANALYST)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  ANALYST
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  actorName String?
+  action    String
+  entity    String
+  entityId  String?
+  detail    String?
+  createdAt DateTime @default(now())
+}
+
+model WorkflowAnalysis {
+ id String @id @default(cuid())
+ actorId String
+ workflow String
+ subjectEntity String
+ subjectId String
+ input Json
+ evidence Json
+ evidenceHash String
+ result Json
+ model String
+ receipt String?
+ createdAt DateTime @default(now())
+ @@index([workflow, createdAt])
+}
+model RecordReview {
+ id String @id @default(cuid())
+ actorId String
+ entity String
+ entityId String
+ version String
+ reason String
+ createdAt DateTime @default(now())
+ @@unique([entity, entityId, version, actorId])
+}
+model UsageBucket {
+ id String @id
+ calls Int
+}
+model IssuedCredential {
+ token String @id
+ entity String
+ entityId String
+ version String
+ assertion Json
+ createdAt DateTime @default(now())
+ revokedAt DateTime?
+ @@index([entity, entityId, createdAt])
+}
+
+model DomainArtifact {
+ id String @id @default(cuid())
+ subjectEntity String
+ subjectId String
+ title String
+ content String
+ contentHash String
+ actorId String
+ approvedBy String?
+ createdAt DateTime @default(now())
+ @@index([subjectEntity, subjectId])
+}
+
+model RecordApproval {
+ id String @id
+ version String
+}
+model DomainExecution {
+ id String @id
+ actorId String
+ connectorId String
+ action String
+ subjectEntity String
+ subjectId String
+ version String
+ status String
+ result Json?
+ createdAt DateTime @default(now())
+}
+
+model WorkSession {
+ id String @id @default(cuid())
+ actorId String
+ respondentId String
+ subjectEntity String
+ subjectId String
+ questions Json
+ answers Json
+ currentQuestion String?
+ status String
+ deadline DateTime
+ createdAt DateTime @default(now())
+ @@index([respondentId, createdAt])
+}
+model SessionMedia {
+ id String @id @default(cuid())
+ sessionId String
+ questionId String
+ actorId String
+ contentType String
+ bytes Bytes
+ contentHash String
+ createdAt DateTime @default(now())
+ @@index([sessionId])
+}
+
+model AppSetting {
+ id String @id
+ value Json
+ updatedAt DateTime @updatedAt
+}
+
+model PayrollProject {
+ id String @id @default(cuid())
+ name String
+ contractNumber String
+ jurisdiction String
+ wageDecision String
+ weekEnding DateTime
+ budgetCents Int
+ status String @default("Draft")
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ inverseWorker_payrollProjectId Worker[] @relation("Worker_payrollProjectId")
+ inverseWageDetermination_payrollProjectId WageDetermination[] @relation("WageDetermination_payrollProjectId")
+ inverseTimecard_payrollProjectId Timecard[] @relation("Timecard_payrollProjectId")
+ inversePayrollLine_payrollProjectId PayrollLine[] @relation("PayrollLine_payrollProjectId")
+ inverseFringeContribution_payrollProjectId FringeContribution[] @relation("FringeContribution_payrollProjectId")
+ inverseClassificationException_payrollProjectId ClassificationException[] @relation("ClassificationException_payrollProjectId")
+ inverseWeeklyPayroll_payrollProjectId WeeklyPayroll[] @relation("WeeklyPayroll_payrollProjectId")
+ inverseRestitution_payrollProjectId Restitution[] @relation("Restitution_payrollProjectId")
+ inverseOperationalTask_payrollProjectId OperationalTask[] @relation("OperationalTask_payrollProjectId")
+ inverseRuleVersion_payrollProjectId RuleVersion[] @relation("RuleVersion_payrollProjectId")
+ inverseDocumentRequirement_payrollProjectId DocumentRequirement[] @relation("DocumentRequirement_payrollProjectId")
+}
+
+model Worker {
+ id String @id @default(cuid())
+ name String
+ employeeCode String
+ classification String
+ contractor String
+ employmentType String
+ status String @default("Draft")
+ payrollProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([payrollProjectId])
+ linkedPayrollProjectId PayrollProject @relation("Worker_payrollProjectId", fields: [payrollProjectId], references: [id], onDelete: Restrict)
+ inverseTimecard_workerId Timecard[] @relation("Timecard_workerId")
+ inversePayrollLine_workerId PayrollLine[] @relation("PayrollLine_workerId")
+ inverseFringeContribution_workerId FringeContribution[] @relation("FringeContribution_workerId")
+ inverseClassificationException_workerId ClassificationException[] @relation("ClassificationException_workerId")
+ inverseRestitution_workerId Restitution[] @relation("Restitution_workerId")
+}
+
+model WageDetermination {
+ id String @id @default(cuid())
+ title String
+ version String
+ classification String
+ baseRateCents Int
+ fringeRateCents Int
+ effectiveAt DateTime
+ status String @default("Draft")
+ payrollProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([payrollProjectId])
+ linkedPayrollProjectId PayrollProject @relation("WageDetermination_payrollProjectId", fields: [payrollProjectId], references: [id], onDelete: Restrict)
+}
+
+model Timecard {
+ id String @id @default(cuid())
+ title String
+ workerId String
+ workDate DateTime
+ regularHours Float
+ overtimeHours Float
+ classification String
+ status String @default("Draft")
+ payrollProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([payrollProjectId])
+ linkedWorkerId Worker @relation("Timecard_workerId", fields: [workerId], references: [id], onDelete: Restrict)
+ linkedPayrollProjectId PayrollProject @relation("Timecard_payrollProjectId", fields: [payrollProjectId], references: [id], onDelete: Restrict)
+}
+
+model PayrollLine {
+ id String @id @default(cuid())
+ title String
+ workerId String
+ grossCents Int
+ deductionsCents Int
+ fringePaidCents Int
+ netCents Int
+ status String @default("Draft")
+ payrollProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([payrollProjectId])
+ linkedWorkerId Worker @relation("PayrollLine_workerId", fields: [workerId], references: [id], onDelete: Restrict)
+ linkedPayrollProjectId PayrollProject @relation("PayrollLine_payrollProjectId", fields: [payrollProjectId], references: [id], onDelete: Restrict)
+}
+
+model FringeContribution {
+ id String @id @default(cuid())
+ title String
+ workerId String
+ planName String
+ contributionCents Int
+ periodEnding DateTime
+ evidence String
+ status String @default("Draft")
+ payrollProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([payrollProjectId])
+ linkedWorkerId Worker @relation("FringeContribution_workerId", fields: [workerId], references: [id], onDelete: Restrict)
+ linkedPayrollProjectId PayrollProject @relation("FringeContribution_payrollProjectId", fields: [payrollProjectId], references: [id], onDelete: Restrict)
+}
+
+model ClassificationException {
+ id String @id @default(cuid())
+ title String
+ workerId String
+ reportedClass String
+ requiredClass String
+ resolution String
+ dueAt DateTime
+ status String @default("Draft")
+ payrollProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([payrollProjectId])
+ linkedWorkerId Worker @relation("ClassificationException_workerId", fields: [workerId], references: [id], onDelete: Restrict)
+ linkedPayrollProjectId PayrollProject @relation("ClassificationException_payrollProjectId", fields: [payrollProjectId], references: [id], onDelete: Restrict)
+}
+
+model WeeklyPayroll {
+ id String @id @default(cuid())
+ title String
+ weekEnding DateTime
+ contractor String
+ payrollNumber String
+ attestationNotes String
+ submittedReceipt String?
+ status String @default("Draft")
+ payrollProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([payrollProjectId])
+ linkedPayrollProjectId PayrollProject @relation("WeeklyPayroll_payrollProjectId", fields: [payrollProjectId], references: [id], onDelete: Restrict)
+}
+
+model Restitution {
+ id String @id @default(cuid())
+ title String
+ workerId String
+ owedCents Int
+ paidCents Int
+ paidAt DateTime?
+ receipt String?
+ status String @default("Draft")
+ payrollProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([payrollProjectId])
+ linkedWorkerId Worker @relation("Restitution_workerId", fields: [workerId], references: [id], onDelete: Restrict)
+ linkedPayrollProjectId PayrollProject @relation("Restitution_payrollProjectId", fields: [payrollProjectId], references: [id], onDelete: Restrict)
+}
+
+model OperationalTask {
+ id String @id @default(cuid())
+ title String
+ owner String
+ priority String
+ startAt DateTime
+ dueAt DateTime
+ done Boolean
+ notes String?
+ status String @default("Draft")
+ payrollProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([payrollProjectId])
+ linkedPayrollProjectId PayrollProject @relation("OperationalTask_payrollProjectId", fields: [payrollProjectId], references: [id], onDelete: Restrict)
+}
+
+model RuleVersion {
+ id String @id @default(cuid())
+ title String
+ jurisdiction String
+ version String
+ effectiveAt DateTime
+ expiresAt DateTime?
+ sourceUrl String
+ requirementText String
+ status String @default("Draft")
+ payrollProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([payrollProjectId])
+ linkedPayrollProjectId PayrollProject @relation("RuleVersion_payrollProjectId", fields: [payrollProjectId], references: [id], onDelete: Restrict)
+}
+
+model DocumentRequirement {
+ id String @id @default(cuid())
+ title String
+ category String
+ requiredBy DateTime
+ sourceReference String
+ evidenceReference String?
+ reviewNotes String?
+ status String @default("Draft")
+ payrollProjectId String
+ createdAt DateTime @default(now())
+ updatedAt DateTime @updatedAt
+ @@index([createdAt])
+ @@index([payrollProjectId])
+ linkedPayrollProjectId PayrollProject @relation("DocumentRequirement_payrollProjectId", fields: [payrollProjectId], references: [id], onDelete: Restrict)
+}

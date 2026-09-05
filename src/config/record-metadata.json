@@ -1,0 +1,624 @@
+{
+  "PayrollProject": {
+    "name": "PayrollProject",
+    "fields": [
+      {
+        "name": "name",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "contractNumber",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "jurisdiction",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "wageDecision",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "weekEnding",
+        "kind": "date",
+        "required": true
+      },
+      {
+        "name": "budgetCents",
+        "kind": "number",
+        "required": true,
+        "integer": true,
+        "min": 0
+      },
+      {
+        "name": "status",
+        "kind": "string",
+        "required": true
+      }
+    ]
+  },
+  "Worker": {
+    "name": "Worker",
+    "fields": [
+      {
+        "name": "name",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "employeeCode",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "classification",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "contractor",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "employmentType",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "status",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "payrollProjectId",
+        "kind": "string",
+        "required": true,
+        "relation": "PayrollProject"
+      }
+    ],
+    "parent": {
+      "entity": "PayrollProject",
+      "field": "payrollProjectId"
+    }
+  },
+  "WageDetermination": {
+    "name": "WageDetermination",
+    "fields": [
+      {
+        "name": "title",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "version",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "classification",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "baseRateCents",
+        "kind": "number",
+        "required": true,
+        "integer": true,
+        "min": 0
+      },
+      {
+        "name": "fringeRateCents",
+        "kind": "number",
+        "required": true,
+        "integer": true,
+        "min": 0
+      },
+      {
+        "name": "effectiveAt",
+        "kind": "date",
+        "required": true
+      },
+      {
+        "name": "status",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "payrollProjectId",
+        "kind": "string",
+        "required": true,
+        "relation": "PayrollProject"
+      }
+    ],
+    "parent": {
+      "entity": "PayrollProject",
+      "field": "payrollProjectId"
+    }
+  },
+  "Timecard": {
+    "name": "Timecard",
+    "fields": [
+      {
+        "name": "title",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "workerId",
+        "kind": "string",
+        "required": true,
+        "relation": "Worker"
+      },
+      {
+        "name": "workDate",
+        "kind": "date",
+        "required": true
+      },
+      {
+        "name": "regularHours",
+        "kind": "number",
+        "required": true,
+        "min": 0
+      },
+      {
+        "name": "overtimeHours",
+        "kind": "number",
+        "required": true,
+        "min": 0
+      },
+      {
+        "name": "classification",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "status",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "payrollProjectId",
+        "kind": "string",
+        "required": true,
+        "relation": "PayrollProject"
+      }
+    ],
+    "parent": {
+      "entity": "PayrollProject",
+      "field": "payrollProjectId"
+    }
+  },
+  "PayrollLine": {
+    "name": "PayrollLine",
+    "fields": [
+      {
+        "name": "title",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "workerId",
+        "kind": "string",
+        "required": true,
+        "relation": "Worker"
+      },
+      {
+        "name": "grossCents",
+        "kind": "number",
+        "required": true,
+        "integer": true,
+        "min": 0
+      },
+      {
+        "name": "deductionsCents",
+        "kind": "number",
+        "required": true,
+        "integer": true,
+        "min": 0
+      },
+      {
+        "name": "fringePaidCents",
+        "kind": "number",
+        "required": true,
+        "integer": true,
+        "min": 0
+      },
+      {
+        "name": "netCents",
+        "kind": "number",
+        "required": true,
+        "integer": true,
+        "min": 0
+      },
+      {
+        "name": "status",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "payrollProjectId",
+        "kind": "string",
+        "required": true,
+        "relation": "PayrollProject"
+      }
+    ],
+    "parent": {
+      "entity": "PayrollProject",
+      "field": "payrollProjectId"
+    }
+  },
+  "FringeContribution": {
+    "name": "FringeContribution",
+    "fields": [
+      {
+        "name": "title",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "workerId",
+        "kind": "string",
+        "required": true,
+        "relation": "Worker"
+      },
+      {
+        "name": "planName",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "contributionCents",
+        "kind": "number",
+        "required": true,
+        "integer": true,
+        "min": 0
+      },
+      {
+        "name": "periodEnding",
+        "kind": "date",
+        "required": true
+      },
+      {
+        "name": "evidence",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "status",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "payrollProjectId",
+        "kind": "string",
+        "required": true,
+        "relation": "PayrollProject"
+      }
+    ],
+    "parent": {
+      "entity": "PayrollProject",
+      "field": "payrollProjectId"
+    }
+  },
+  "ClassificationException": {
+    "name": "ClassificationException",
+    "fields": [
+      {
+        "name": "title",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "workerId",
+        "kind": "string",
+        "required": true,
+        "relation": "Worker"
+      },
+      {
+        "name": "reportedClass",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "requiredClass",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "resolution",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "dueAt",
+        "kind": "date",
+        "required": true
+      },
+      {
+        "name": "status",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "payrollProjectId",
+        "kind": "string",
+        "required": true,
+        "relation": "PayrollProject"
+      }
+    ],
+    "parent": {
+      "entity": "PayrollProject",
+      "field": "payrollProjectId"
+    }
+  },
+  "WeeklyPayroll": {
+    "name": "WeeklyPayroll",
+    "fields": [
+      {
+        "name": "title",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "weekEnding",
+        "kind": "date",
+        "required": true
+      },
+      {
+        "name": "contractor",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "payrollNumber",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "attestationNotes",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "submittedReceipt",
+        "kind": "string",
+        "required": false
+      },
+      {
+        "name": "status",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "payrollProjectId",
+        "kind": "string",
+        "required": true,
+        "relation": "PayrollProject"
+      }
+    ],
+    "parent": {
+      "entity": "PayrollProject",
+      "field": "payrollProjectId"
+    }
+  },
+  "Restitution": {
+    "name": "Restitution",
+    "fields": [
+      {
+        "name": "title",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "workerId",
+        "kind": "string",
+        "required": true,
+        "relation": "Worker"
+      },
+      {
+        "name": "owedCents",
+        "kind": "number",
+        "required": true,
+        "integer": true,
+        "min": 0
+      },
+      {
+        "name": "paidCents",
+        "kind": "number",
+        "required": true,
+        "integer": true,
+        "min": 0
+      },
+      {
+        "name": "paidAt",
+        "kind": "date",
+        "required": false
+      },
+      {
+        "name": "receipt",
+        "kind": "string",
+        "required": false
+      },
+      {
+        "name": "status",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "payrollProjectId",
+        "kind": "string",
+        "required": true,
+        "relation": "PayrollProject"
+      }
+    ],
+    "parent": {
+      "entity": "PayrollProject",
+      "field": "payrollProjectId"
+    }
+  },
+  "OperationalTask": {
+    "name": "OperationalTask",
+    "fields": [
+      {
+        "name": "title",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "owner",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "priority",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "startAt",
+        "kind": "date",
+        "required": true
+      },
+      {
+        "name": "dueAt",
+        "kind": "date",
+        "required": true
+      },
+      {
+        "name": "done",
+        "kind": "boolean",
+        "required": true
+      },
+      {
+        "name": "notes",
+        "kind": "string",
+        "required": false
+      },
+      {
+        "name": "status",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "payrollProjectId",
+        "kind": "string",
+        "required": true,
+        "relation": "PayrollProject"
+      }
+    ],
+    "parent": {
+      "entity": "PayrollProject",
+      "field": "payrollProjectId"
+    }
+  },
+  "RuleVersion": {
+    "name": "RuleVersion",
+    "fields": [
+      {
+        "name": "title",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "jurisdiction",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "version",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "effectiveAt",
+        "kind": "date",
+        "required": true
+      },
+      {
+        "name": "expiresAt",
+        "kind": "date",
+        "required": false
+      },
+      {
+        "name": "sourceUrl",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "requirementText",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "status",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "payrollProjectId",
+        "kind": "string",
+        "required": true,
+        "relation": "PayrollProject"
+      }
+    ],
+    "parent": {
+      "entity": "PayrollProject",
+      "field": "payrollProjectId"
+    }
+  },
+  "DocumentRequirement": {
+    "name": "DocumentRequirement",
+    "fields": [
+      {
+        "name": "title",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "category",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "requiredBy",
+        "kind": "date",
+        "required": true
+      },
+      {
+        "name": "sourceReference",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "evidenceReference",
+        "kind": "string",
+        "required": false
+      },
+      {
+        "name": "reviewNotes",
+        "kind": "string",
+        "required": false
+      },
+      {
+        "name": "status",
+        "kind": "string",
+        "required": true
+      },
+      {
+        "name": "payrollProjectId",
+        "kind": "string",
+        "required": true,
+        "relation": "PayrollProject"
+      }
+    ],
+    "parent": {
+      "entity": "PayrollProject",
+      "field": "payrollProjectId"
+    }
+  }
+}

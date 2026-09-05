@@ -1,0 +1,3 @@
+import { authorize } from '@/lib/api-auth';
+import { errorResponse } from '@/lib/record-store';
+export async function GET(){try{await authorize();const r=await fetch('https://openrouter.ai/api/v1/models',{signal:AbortSignal.timeout(15000),next:{revalidate:3600}});if(!r.ok)throw new Error('Catalog unavailable');const data=await r.json();return Response.json({models:data.data.filter((m:{id:unknown})=>typeof m.id==='string').map((m:{id:string;name:string;context_length:number;supported_parameters:string[];pricing:unknown})=>({id:m.id,name:m.name,contextLength:m.context_length,supportedParameters:m.supported_parameters,pricing:m.pricing}))});}catch(e){return errorResponse(e);}}
