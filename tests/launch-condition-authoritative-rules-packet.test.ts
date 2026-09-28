@@ -11,6 +11,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { calculate } from '../src/lib/domain-engine';
+import tools from '../src/config/domain-tools.json';
+import { toolResponseResult } from '../src/app/api/tools/route';
 
 const RULE = 'DOL WD 2026-04 (29 CFR Part 5)';
 
@@ -157,17 +159,36 @@ test('packet: duplicate identifiers are rejected rather than silently merged', (
   );
 });
 
-test('packet: every rule-backed calculation echoes the rule source it used', () => {
-  const r: any = calculate('payroll', {
+test('packet: the shipped tools API reports rule-source provenance', () => {
+  const tool = tools.find(t => t.id === 'domain-calculation');
+  assert.ok(tool, 'the payroll calculation tool is shipped');
+  const input = {
     ruleSource: RULE,
     regularMinutes: 60,
-    overtimeMinutes: 0,
+    overtimeMinutes: 60,
     baseRateCents: 1000,
     fringeRateCents: 0,
     overtimeMultiplier: 1.5,
     grossPaidCents: 0,
     fringePaidCents: 0,
-  });
-  // calculate() itself requires the source; runTool() echoes it back.
-  assert.match(r.method, /fringe/i);
+  };
+  // toolResponseResult is the exact payload builder used by POST /api/tools.
+  const verified: any = toolResponseResult(tool, input, false, { id: 'fixture-rule-version' });
+  assert.equal(verified.ruleSource, RULE);
+  assert.equal(verified.ruleSourceStatus, 'VERIFIED');
+  assert.equal(verified.ruleVersionId, 'fixture-rule-version');
+  assert.equal(verified.datasetType, 'user-supplied');
+  assert.equal(verified.requiredWageCents, 2500);
+  const example: any = toolResponseResult(tool, { ...input, ruleSource: 'example-only' }, true, null);
+  assert.equal(example.ruleSourceStatus, 'UNVERIFIED');
+  assert.equal(example.ruleVersionId, null);
+  assert.equal(example.datasetType, 'example');
+});
+
+test('packet: accepted packet window verification is reachable from the shipped catalog', () => {
+  const tool = tools.find(t => t.operation === 'windows');
+  assert.ok(tool, 'the validity-window tool is shipped in the tools catalog');
+  const r: any = toolResponseResult(tool, tool.example, true, null);
+  assert.equal(r.checks[0].coversEvent, true);
+  assert.equal(r.checks[1].coversEvent, false);
 });

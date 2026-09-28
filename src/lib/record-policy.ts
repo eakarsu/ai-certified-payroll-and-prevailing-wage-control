@@ -12,7 +12,18 @@ export function objectBody(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new RequestError("Expected a JSON object", 400);
   return value as Record<string, unknown>;
 }
-const controlledState = /^(approved|verified|validated|certified|issued|published|submitted|released|signed|disbursed|passed|complete[d]?|closed)$/i;
+// Sign-off-like states that only the two-reviewer workflow may set. Values are
+// normalized (case, whitespace and punctuation removed) so "Approved.",
+// "PAID" or "Reviewed " cannot bypass the guard.
+const controlledStates = new Set([
+  "accepted", "approved", "authorized", "certified", "cleared", "closed",
+  "complete", "completed", "confirmed", "disbursed", "executed", "filed",
+  "final", "finalized", "granted", "issued", "paid", "passed", "published",
+  "released", "resolved", "reviewed", "signed", "submitted", "validated",
+  "verified",
+]);
+const normalizeState = (value: string) => value.toLowerCase().replace(/[\s\p{P}]+/gu, "");
+const isControlledState = (value: unknown) => typeof value === "string" && controlledStates.has(normalizeState(value));
 export function validateRecord(entity: string, input: unknown, existing?: Record<string, unknown>) {
   const config = recordMetadata[entity];
   if (!config) throw new RequestError("Unknown entity", 404);
@@ -51,14 +62,14 @@ export function validateRecord(entity: string, input: unknown, existing?: Record
     }
     const previous = existing?.[f.name];
     const next = data[f.name];
-    if (next !== previous && ((/status|state/i.test(f.name) && typeof next === "string" && controlledState.test(next)) || (/^(verified|signed|approved|certified)$/i.test(f.name) && next === true))) {
+    if (next !== previous && ((/status|state/i.test(f.name) && isControlledState(next) && normalizeState(String(next)) !== normalizeState(String(previous ?? ""))) || (/^(verified|signed|approved|certified)$/i.test(f.name) && next === true))) {
       throw new RequestError(`${f.name} requires the review workflow; operational completion cannot be entered directly`, 409);
     }
   }
   for (const f of config.fields.filter(f => f.relation)) if (!(data[f.name] ?? existing?.[f.name])) throw new RequestError(`Select ${f.relation} before saving`);
   if (config.parent && !(data[config.parent.field] ?? existing?.[config.parent.field])) throw new RequestError(`Select ${config.parent.entity} before saving`);
   const merged = { ...existing, ...data };
-  for (const [start, end] of [["startAt","endAt"],["periodStart","periodEnd"],["departedAt","returnedAt"],["departureAt","arrivalAt"],["startDate","endDate"],["inception","expiry"],["validFrom","validUntil"],["producedAt","expiresAt"],["issuedAt","expiresAt"],["assignedAt","returnedAt"],["startAt","dueAt"]]) {
+  for (const [start, end] of [["startAt","endAt"],["periodStart","periodEnd"],["departedAt","returnedAt"],["departureAt","arrivalAt"],["startDate","endDate"],["inception","expiry"],["validFrom","validUntil"],["producedAt","expiresAt"],["issuedAt","expiresAt"],["effectiveAt","expiresAt"],["assignedAt","returnedAt"],["startAt","dueAt"]]) {
     if (merged[start] && merged[end] && new Date(String(merged[end])).getTime() < new Date(String(merged[start])).getTime()) throw new RequestError(`${end} cannot precede ${start}`);
   }
   return data;

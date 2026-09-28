@@ -4,7 +4,7 @@ import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
   title: "Certified Payroll and Prevailing Wage Control",
-  description: "Import timecards and wage determinations; calculate classification/fringe exceptions; assemble weekly certified payroll with reviewer sign-off.",
+  description: "Record workers, timecards and wage determinations; calculate wage and fringe obligations from supplied figures; assemble weekly certified payroll with reviewer sign-off.",
 };
 
 export default function RootLayout({

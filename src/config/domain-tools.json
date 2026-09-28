@@ -55,5 +55,27 @@
         }
       ]
     }
+  },
+  {
+    "id": "packet-window-check",
+    "operation": "windows",
+    "title": "Accepted packet validity window check",
+    "description": "Check explicitly supplied document windows against a packet event date; presence of a covering window only, reviewer assesses adequacy. Non-example datasets must name a current approved RuleVersion.",
+    "example": {
+      "ruleSource": "Fictional demonstration rule v1; replace with reviewed applicable terms",
+      "eventAt": "2026-07-15",
+      "documents": [
+        {
+          "id": "determination",
+          "validFrom": "2026-01-01",
+          "validUntil": "2026-12-31"
+        },
+        {
+          "id": "expired",
+          "validFrom": "2025-01-01",
+          "validUntil": "2025-12-31"
+        }
+      ]
+    }
   }
 ]
