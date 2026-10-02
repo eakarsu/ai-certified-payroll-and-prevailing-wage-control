@@ -28,6 +28,9 @@ export default function LoginPage() {
       const data = await response.json();
       if (!response.ok || typeof data.email !== 'string' || typeof data.password !== 'string') throw new Error(data.error || 'Unable to fill credentials.');
       setEmail(data.email); setPassword(data.password);
+      const result = await signIn('credentials', { redirect: false, email: data.email, password: data.password });
+      if (!result || result.error) { setError('Credentials filled. Press Sign in securely to continue.'); return; }
+      router.push('/dashboard'); router.refresh();
     } catch (e) { setError(e instanceof Error ? e.message : 'Unable to fill credentials.'); }
     finally { setFilling(false); }
   }
