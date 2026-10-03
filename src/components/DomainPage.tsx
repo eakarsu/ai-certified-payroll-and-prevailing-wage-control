@@ -55,7 +55,6 @@ function EntityBlock({ entity, role, autoOpen }: { entity: string; role: string;
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState(autoOpen && canWrite(role));
   const [selected, setSelected] = useState<Row | null>(null);
-  const [mode, setMode] = useState<"view" | "edit">("edit");
   const [form, setForm] = useState<Record<string, string>>({});
   const [reason, setReason] = useState("");
   const [notice, setNotice] = useState("");
@@ -69,16 +68,11 @@ function EntityBlock({ entity, role, autoOpen }: { entity: string; role: string;
     api(`/api/records/${entity}?page=${page}&q=${encodeURIComponent(query)}`).then(data => { if (active) { setRows(data.rows); setTotal(data.total); setError(""); } }).catch(e => { if (active) setError(message(e)); });
     return () => { active = false; };
   }, [entity, page, query]);
-  function toForm(row: Row | null) {
-    return Object.fromEntries(fields.map(f => [f.name, row?.[f.name] == null ? (f.kind === "boolean" ? "false" : "") : f.kind === "date" ? String(row[f.name]).slice(0, 10) : String(row[f.name])]));
+  function edit(row: Row | null) {
+    setSelected(row); setReason(""); setNotice(""); setError(""); setDeleting(false);
+    setForm(Object.fromEntries(fields.map(f => [f.name, row?.[f.name] == null ? (f.kind === "boolean" ? "false" : "") : f.kind === "date" ? String(row[f.name]).slice(0, 10) : String(row[f.name])])));
+    setOpen(true);
   }
-  function openRow(row: Row) {
-    setSelected(row); setReason(""); setNotice(""); setError(""); setDeleting(false); setForm(toForm(row)); setMode("view"); setOpen(true);
-  }
-  function createRow() {
-    setSelected(null); setReason(""); setNotice(""); setError(""); setDeleting(false); setForm(toForm(null)); setMode("edit"); setOpen(true);
-  }
-  function closeDialog() { if (!busy) { setOpen(false); setDeleting(false); setError(""); } }
   async function save(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setError("");
     try {
@@ -88,7 +82,7 @@ function EntityBlock({ entity, role, autoOpen }: { entity: string; role: string;
   }
   async function destroy() {
     if (!selected) return; setBusy(true); setError("");
-    try { await api(`/api/records/${entity}`, jsonRequest("DELETE", { id: selected.id, updatedAt: selected.updatedAt })); setOpen(false); setDeleting(false); await load(); } catch (e) { setError(message(e)); } finally { setBusy(false); }
+    try { await api(`/api/records/${entity}`, jsonRequest("DELETE", { id: selected.id, updatedAt: selected.updatedAt })); setOpen(false); await load(); } catch (e) { setError(message(e)); } finally { setBusy(false); }
   }
   async function review() {
     if (!selected) return; setBusy(true); setError("");
@@ -97,82 +91,10 @@ function EntityBlock({ entity, role, autoOpen }: { entity: string; role: string;
       setNotice(`${data.status}${data.verificationToken ? ` · Verification: ${location.origin}/api/verify/${data.verificationToken}` : ""}`); await load();
     } catch (e) { setError(message(e)); } finally { setBusy(false); }
   }
-  const canEdit = canWrite(role);
-  return (
-    <section className="space-y-4 rounded-xl border bg-white p-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold">{entities[entity].label} · {total} records</h2>
-        {canEdit ? <Button onClick={createRow}>New record</Button> : <span>Read only</span>}
-      </div>
-      <Notice text={!open ? error : ""} />
-      {canEdit ? <RecordImport entity={entity} onImported={load} /> : null}
-      <div className="flex gap-3 text-sm"><a className="underline" href={`/api/export/${entity}?format=csv`}>Export CSV</a><a className="underline" href={`/api/export/${entity}?format=json`}>Export JSON</a></div>
-      <Input aria-label="Search records" placeholder="Search records" value={query} onChange={e => { setQuery(e.target.value); setPage(1); setError(""); }} />
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead><tr>{fields.slice(0, 5).map(f => <th key={f.name} className="p-2">{pretty(f.name)}</th>)}<th>Details</th></tr></thead>
-          <tbody>
-            {rows.map(row => (
-              <tr className="cursor-pointer border-t hover:bg-slate-50" key={row.id} onClick={() => openRow(row)}>
-                {fields.slice(0, 5).map(f => <td key={f.name} className="max-w-64 truncate p-2">{String(row[f.name] ?? "—")}</td>)}
-                <td><button type="button" className="underline" onClick={event => { event.stopPropagation(); openRow(row); }}>Open</button></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="flex gap-4"><Button disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</Button><span>Page {page} of {Math.max(1, Math.ceil(total / 20))}</span><Button disabled={page * 20 >= total} onClick={() => setPage(page + 1)}>Next</Button></div>
-      <Dialog open={open} onClose={closeDialog} title={`${selected ? entities[entity].label : "New"} · ${selected ? selected.id : "record"}`}>
-        <div className="space-y-4">
-          <Notice text={error} />
-          <Notice text={notice} />
-          {selected && mode === "view" ? (
-            <div className="space-y-4">
-              <dl className="grid gap-3 sm:grid-cols-2">
-                {fields.map(f => (
-                  <div key={f.name}>
-                    <dt className="text-xs uppercase tracking-wide text-slate-400">{pretty(f.name)}</dt>
-                    <dd className="text-sm text-slate-900">{form[f.name] === "" ? "—" : form[f.name]}</dd>
-                  </div>
-                ))}
-              </dl>
-              <div className="flex flex-wrap gap-2 border-t pt-3">
-                {canEdit ? <Button type="button" onClick={() => setMode("edit")}>Edit</Button> : null}
-                {canEdit && canDelete(role) ? <Button type="button" variant="outline" className="text-red-600" onClick={() => setDeleting(true)} disabled={busy}>Delete</Button> : null}
-                <Button type="button" variant="outline" onClick={closeDialog} disabled={busy}>Cancel</Button>
-              </div>
-            </div>
-          ) : (
-            <form onSubmit={save} className="space-y-3">
-              <fieldset disabled={!canEdit || busy} className="space-y-3">
-                {fields.map(f => <label key={f.name} className="block space-y-1 text-sm"><span>{pretty(f.name)}{f.required || f.relation ? " *" : ""}</span><RecordField field={f} value={form[f.name] ?? (f.kind === "boolean" ? "false" : "")} onChange={value => setForm(prev => ({ ...prev, [f.name]: value }))} /></label>)}
-              </fieldset>
-              <div className="flex flex-wrap gap-2">
-                {canEdit ? <Button type="submit" disabled={busy}>{busy ? "Saving…" : selected ? "Save changes" : "Create record"}</Button> : null}
-                <Button type="button" variant="outline" onClick={() => selected ? setMode("view") : closeDialog()} disabled={busy}>Cancel</Button>
-              </div>
-            </form>
-          )}
-          {selected && mode === "view" && canEdit ? (
-            <div className="space-y-2 border-t pt-3">
-              <p className="text-sm">Approval requires two independent reviewers of the saved record. The last editor cannot approve. Approval records a human decision; external verification and submission require their own services.</p>
-              <textarea aria-label="Review rationale" className="w-full rounded border p-2" placeholder="Evidence reviewed and decision rationale" value={reason} onChange={e => setReason(e.target.value)} />
-              <Button type="button" onClick={review} disabled={busy || reason.trim().length < 20}>Record independent review</Button>
-            </div>
-          ) : null}
-          {selected && deleting && canDelete(role) ? (
-            <div className="space-y-2 border-t pt-3">
-              <p>Permanently delete this record?</p>
-              <div className="flex flex-wrap gap-2">
-                <Button type="button" disabled={busy} onClick={destroy}>Confirm permanent deletion</Button>
-                <Button type="button" variant="outline" disabled={busy} onClick={() => setDeleting(false)}>Cancel</Button>
-              </div>
-            </div>
-          ) : null}
-        </div>
-      </Dialog>
-    </section>
-  );
+  return <section className="space-y-4 rounded-xl border bg-white p-5"><div className="flex items-center justify-between"><h2 className="text-lg font-semibold">{entities[entity].label} · {total} records</h2>{canWrite(role) ? <Button onClick={() => edit(null)}>New record</Button> : <span>Read only</span>}</div><Notice text={!open ? error : ""}/>{canWrite(role) ? <RecordImport entity={entity} onImported={load}/> : null}<div className="flex gap-3 text-sm"><a className="underline" href={`/api/export/${entity}?format=csv`}>Export CSV</a><a className="underline" href={`/api/export/${entity}?format=json`}>Export JSON</a></div><Input aria-label="Search records" placeholder="Search records" value={query} onChange={e => { setQuery(e.target.value); setPage(1); setError(""); }}/><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr>{fields.slice(0, 5).map(f => <th key={f.name} className="p-2">{pretty(f.name)}</th>)}<th>Details</th></tr></thead><tbody>{rows.map(row => <tr className="border-t" key={row.id}>{fields.slice(0, 5).map(f => <td key={f.name} className="max-w-64 truncate p-2">{String(row[f.name] ?? "—")}</td>)}<td><button className="underline" onClick={() => edit(row)}>Open</button></td></tr>)}</tbody></table></div><div className="flex gap-4"><Button disabled={page === 1} onClick={() => setPage(page - 1)}>Previous</Button><span>Page {page} of {Math.max(1, Math.ceil(total / 20))}</span><Button disabled={page * 20 >= total} onClick={() => setPage(page + 1)}>Next</Button></div>
+    <Dialog open={open} onClose={() => { if (!busy) setOpen(false); }} title={`${selected ? "Record" : "New"} · ${entities[entity].label}`}><div className="space-y-4"><Notice text={error}/><Notice text={notice}/><form onSubmit={save} className="space-y-3"><fieldset disabled={!canWrite(role) || busy} className="space-y-3">{fields.map(f => <label key={f.name} className="block space-y-1 text-sm"><span>{pretty(f.name)}{f.required || f.relation ? " *" : ""}</span><RecordField field={f} value={form[f.name] ?? (f.kind === "boolean" ? "false" : "")} onChange={value => setForm(prev => ({ ...prev, [f.name]: value }))}/></label>)}{canWrite(role) ? <Button type="submit" disabled={busy}>{busy ? "Saving…" : "Save record"}</Button> : null}</fieldset></form>
+    {selected && canWrite(role) ? <div className="space-y-2 border-t pt-3"><p className="text-sm">Approval requires two independent reviewers of the saved record. The last editor cannot approve. Approval records a human decision; external verification and submission require their own services.</p><textarea aria-label="Review rationale" className="w-full rounded border p-2" placeholder="Evidence reviewed and decision rationale" value={reason} onChange={e => setReason(e.target.value)}/><Button onClick={review} disabled={busy || reason.trim().length < 20}>Record independent review</Button></div> : null}
+    {selected && canDelete(role) ? <div className="border-t pt-3">{deleting ? <><p>Permanently delete this record?</p><Button disabled={busy} onClick={destroy}>Confirm permanent deletion</Button><Button disabled={busy} onClick={() => setDeleting(false)}>Cancel</Button></> : <Button onClick={() => setDeleting(true)}>Delete record…</Button>}</div> : null}</div></Dialog></section>;
 }
 
 function WorkflowBlock({ slug, role }: { slug: string; role: string }) {
