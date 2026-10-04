@@ -51,6 +51,27 @@ model WorkflowAnalysis {
  createdAt DateTime @default(now())
  @@index([workflow, createdAt])
 }
+
+model PayrollPacket {
+ id String @id @default(cuid())
+ weeklyPayrollId String
+ payrollProjectId String
+ snapshot Json
+ snapshotHash String
+ issues Json
+ status String @default("PREPARED")
+ preparedById String
+ acceptedById String?
+ acceptedAt DateTime?
+ reviewNotes String?
+ receiptReference String?
+ receiptArtifactId String?
+ receiptRecordedById String?
+ receiptRecordedAt DateTime?
+ createdAt DateTime @default(now())
+ @@unique([weeklyPayrollId, snapshotHash])
+ @@index([payrollProjectId, createdAt])
+}
 model RecordReview {
  id String @id @default(cuid())
  actorId String
@@ -223,6 +244,7 @@ model PayrollLine {
  id String @id @default(cuid())
  title String
  workerId String
+ weeklyPayrollId String?
  grossCents Int
  deductionsCents Int
  fringePaidCents Int
@@ -233,7 +255,9 @@ model PayrollLine {
  updatedAt DateTime @updatedAt
  @@index([createdAt])
  @@index([payrollProjectId])
+ @@index([weeklyPayrollId])
  linkedWorkerId Worker @relation("PayrollLine_workerId", fields: [workerId], references: [id], onDelete: Restrict)
+ linkedWeeklyPayrollId WeeklyPayroll? @relation("PayrollLine_weeklyPayrollId", fields: [weeklyPayrollId], references: [id], onDelete: Restrict)
  linkedPayrollProjectId PayrollProject @relation("PayrollLine_payrollProjectId", fields: [payrollProjectId], references: [id], onDelete: Restrict)
 }
 
@@ -288,6 +312,7 @@ model WeeklyPayroll {
  @@index([createdAt])
  @@index([payrollProjectId])
  linkedPayrollProjectId PayrollProject @relation("WeeklyPayroll_payrollProjectId", fields: [payrollProjectId], references: [id], onDelete: Restrict)
+ inversePayrollLine_weeklyPayrollId PayrollLine[] @relation("PayrollLine_weeklyPayrollId")
 }
 
 model Restitution {

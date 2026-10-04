@@ -208,6 +208,12 @@
         "relation": "Worker"
       },
       {
+        "name": "weeklyPayrollId",
+        "kind": "string",
+        "required": false,
+        "relation": "WeeklyPayroll"
+      },
+      {
         "name": "grossCents",
         "kind": "number",
         "required": true,

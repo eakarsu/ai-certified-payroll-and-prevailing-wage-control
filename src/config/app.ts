@@ -242,6 +242,10 @@ export const entities: Record<string, EntityConfig> = {
         "kind": "string"
       },
       {
+        "name": "weeklyPayrollId",
+        "kind": "string"
+      },
+      {
         "name": "grossCents",
         "kind": "number"
       },
